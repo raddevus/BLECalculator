@@ -166,11 +166,11 @@ extension CalculatorViewModel : CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         print("Characteristic updated: \(characteristic.uuid)")
         if characteristic.uuid == outputCharUUID, let data = characteristic.value {
-            let bytes:[UInt8] = data.map {$0}
+            let bytes:[Int16] = data.map {Int16($0)}
             
             if let answer = bytes.first {
                 DispatchQueue.main.async {
-                    self.output = "\(self.operands[0]) \(self.operatorSymbol) \(self.operands[1]) = \(answer)"
+                    self.output = "\(bytes)"
                     
                     // Clear inputs
                     self.operands[0] = 0x00
