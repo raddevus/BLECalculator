@@ -1,2 +1,2 @@
-# BlogProjects
-Projects referenced in my blog at https://www.robkerr.com
+# BLECalculator 
+Based on RobKerr.com code - examining data send from device to iphone
