@@ -165,12 +165,29 @@ extension CalculatorViewModel : CBPeripheralDelegate {
     
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         print("Characteristic updated: \(characteristic.uuid)")
+        
+        
+        
         if characteristic.uuid == outputCharUUID, let data = characteristic.value {
+            
+            guard let data = characteristic.value else {
+                return
+            }
+           
+            let mpuData = data.withUnsafeBytes {(int16Ptr: UnsafePointer<Int16>)->BLEData in
+                BLEData(x: Int16(littleEndian: int16Ptr[0]))
+            }
+            print(mpuData.x)
+            
             let bytes:[Int16] = data.map {Int16($0)}
+            if let e = error {
+                print("ERROR didUpdateValue \(e)")
+                return
+            }
             
             if let answer = bytes.first {
                 DispatchQueue.main.async {
-                    self.output = "\(bytes)"
+                    self.output = "\(mpuData.x)"
                     
                     // Clear inputs
                     self.operands[0] = 0x00
@@ -179,4 +196,33 @@ extension CalculatorViewModel : CBPeripheralDelegate {
             }
         }
     }
+    
+    
 }
+
+struct BLEData {
+    let x: Int16
+    
+}
+
+protocol DataConvertible {
+    init(data:Data)
+    var data:Data { get }
+}
+
+extension DataConvertible {
+    init(data:Data) {
+        guard data.count == MemoryLayout<Self>.size else {
+            fatalError("data size (\(data.count)) != type size (\(MemoryLayout<Self>.size))")
+        }
+        self = data.withUnsafeBytes { $0.pointee }
+    }
+
+    var data:Data {
+        var value = self
+        return Data(buffer: UnsafeBufferPointer(start: &value, count: 1))
+    }
+}
+
+extension Int16:DataConvertible {}
+extension Int32:DataConvertible {}
